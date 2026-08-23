@@ -4,16 +4,19 @@ import { FORMATS } from "../translator/formats.js";
 export function parseSSELine(line, format = null) {
   if (!line) return null;
 
-  // NDJSON format (Ollama): raw JSON lines without "data:" prefix
-  if (format === FORMATS.OLLAMA) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("{")) {
-      try {
-        return JSON.parse(trimmed);
-      } catch (error) {
-        return null;
-      }
+  const trimmed = line.trim();
+
+  // NDJSON format (Ollama and compatible providers): raw JSON lines without
+  // a "data:" prefix. Detect the shape as well as the explicit format because
+  // the final stream-buffer flush may not have format metadata available.
+  if (trimmed.startsWith("{")) {
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return null;
     }
+  }
+  if (format === FORMATS.OLLAMA) {
     return null;
   }
 
