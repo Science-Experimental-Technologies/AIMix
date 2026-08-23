@@ -1,0 +1,36 @@
+export default {
+  id: "scaleway",
+  priority: 69,
+  hasFree: true,
+  alias: "scaleway",
+  aliases: ["scw"],
+  uiAlias: "scw",
+  display: {
+    name: "Scaleway Generative APIs",
+    icon: "cloud_queue",
+    color: "#4F0599",
+    textIcon: "SC",
+    website: "https://www.scaleway.com/en/generative-apis/",
+    notice: { apiKeyUrl: "https://console.scaleway.com/iam/api-keys" },
+  },
+  category: "apikey",
+  authType: "apikey",
+  transport: {
+    baseUrl: "https://api.scaleway.ai/v1/chat/completions",
+    validateUrl: "https://api.scaleway.ai/v1/models",
+  },
+  models: [
+    { id: "glm-5.2", name: "GLM 5.2" },
+    { id: "deepseek-v4-flash-0731", name: "DeepSeek V4 Flash" },
+  ],
+  serviceKinds: ["llm", "imageToText", "embedding", "stt"],
+  embeddingConfig: { baseUrl: "https://api.scaleway.ai/v1/embeddings" },
+  sttConfig: {
+    baseUrl: "https://api.scaleway.ai/v1/audio/transcriptions",
+    authType: "apikey",
+    authHeader: "bearer",
+    format: "openai",
+  },
+  modelsFetcher: { url: "https://api.scaleway.ai/v1/models", type: "openai" },
+  passthroughModels: true,
+};

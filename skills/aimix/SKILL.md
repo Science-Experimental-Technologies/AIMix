@@ -1,0 +1,54 @@
+---
+name: aimix
+description: Entry point for AIMix — local/remote AI gateway with OpenAI-compatible REST for chat, image, TTS, embeddings, web search, web fetch. Use when the user mentions AIMix, AIMIX_URL, or wants AI without writing provider boilerplate. This skill covers setup + indexes capability skills; fetch the relevant capability SKILL.md from the URLs below when needed.
+---
+
+# AIMix
+
+Local/remote AI gateway exposing OpenAI-compatible REST. One key, many providers, auto-fallback.
+
+## Setup
+
+```bash
+export AIMIX_URL="http://localhost:20128"      # or VPS / tunnel URL
+export AIMIX_KEY="sk-..."                      # from Dashboard → Keys (only if requireApiKey=true)
+```
+
+All requests: `${AIMIX_URL}/v1/...` with header `Authorization: Bearer ${AIMIX_KEY}` (omit if auth disabled).
+
+Verify: `curl $AIMIX_URL/api/health` → `{"ok":true}`
+
+## Discover models
+
+```bash
+curl $AIMIX_URL/v1/models                  # chat/LLM (default)
+curl $AIMIX_URL/v1/models/image            # image-gen
+curl $AIMIX_URL/v1/models/tts              # text-to-speech
+curl $AIMIX_URL/v1/models/embedding        # embeddings
+curl $AIMIX_URL/v1/models/web              # web search + fetch (entries have `kind` field)
+curl $AIMIX_URL/v1/models/stt              # speech-to-text
+curl $AIMIX_URL/v1/models/image-to-text    # vision
+```
+
+Use `data[].id` as `model` field in requests. Combos appear with `owned_by:"combo"`.
+
+Response shape:
+```json
+{ "object": "list", "data": [
+  { "id": "openai/gpt-5", "object": "model", "owned_by": "openai", "created": 1735000000 },
+  { "id": "tavily/search", "object": "model", "kind": "webSearch", "owned_by": "tavily", "created": 1735000000 }
+]}
+```
+
+## Capability skills
+
+When the user needs a specific capability, fetch that skill's `SKILL.md` from its raw URL:
+
+| Capability | Raw URL |
+|---|---|
+
+## Errors
+
+- 401 → set/refresh `AIMIX_KEY` (Dashboard → Keys)
+- 400 `Invalid model format` → check `model` exists in `/v1/models/<kind>`
+- 503 `All accounts unavailable` → wait `retry-after` or add another provider account

@@ -1,0 +1,30 @@
+export default {
+  id: "novita",
+  priority: 64,
+  hasFree: true,
+  alias: "novita",
+  aliases: ["novita-ai"],
+  display: {
+    name: "Novita AI",
+    icon: "auto_awesome",
+    color: "#7C3AED",
+    textIcon: "NV",
+    website: "https://novita.ai",
+    notice: { apiKeyUrl: "https://novita.ai/settings/key-management" },
+  },
+  category: "apikey",
+  authType: "apikey",
+  transport: {
+    baseUrl: "https://api.novita.ai/openai/v1/chat/completions",
+    validateUrl: "https://api.novita.ai/v1/models",
+  },
+  models: [
+    { id: "zai-org/glm-5.1", name: "GLM 5.1" },
+    { id: "stepfun/step-3.7-flash", name: "Step 3.7 Flash" },
+    { id: "deepseek/deepseek-r1", name: "DeepSeek R1" },
+  ],
+  serviceKinds: ["llm", "imageToText", "embedding"],
+  embeddingConfig: { baseUrl: "https://api.novita.ai/openai/v1/embeddings" },
+  modelsFetcher: { url: "https://api.novita.ai/v1/models", type: "openai" },
+  passthroughModels: true,
+};
