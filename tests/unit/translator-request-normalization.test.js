@@ -177,6 +177,7 @@ describe("request normalization", () => {
       message: { role: "assistant", content: "hello" },
       done: false,
     });
+    expect(parseSSELine('{"message":')).toBeNull();
   });
 
   it("parseSSELine still supports SSE data lines", () => {
