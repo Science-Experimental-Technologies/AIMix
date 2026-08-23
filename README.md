@@ -8,7 +8,7 @@
   **A self-hosted AI gateway and decision fabric for models, agents, developer tools, and multimodal workloads.**
 
   [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e.svg)](./LICENSE)
-  [![Node.js 18+](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)](./package.json)
+  [![Node.js 20.9+](https://img.shields.io/badge/Node.js-20.9%2B-339933?logo=node.js&logoColor=white)](./package.json)
   [![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](./package.json)
   [![Self-hosted](https://img.shields.io/badge/Deployment-Self--hosted-2563eb)](./DOCKER.md)
   [![Providers](https://img.shields.io/badge/Active_providers-120%2B-8b5cf6)](./open-sse/providers/registry)
@@ -161,7 +161,7 @@ Security, privacy, authorization, required capability, and hard budgets are eval
 
 ### Prerequisites
 
-- Node.js 18 or newer
+- Node.js 20.9 or newer (Node.js 22 LTS recommended)
 - npm
 - Git
 - One provider credential or a reachable local model runtime
