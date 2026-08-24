@@ -22,8 +22,16 @@ function mockFetchOnce(payload, { ok = true, status = 200 } = {}) {
 }
 
 describe("refreshAccessToken — config-driven profiles", () => {
-  beforeEach(() => { vi.clearAllMocks(); vi.resetModules(); global.fetch = originalFetch; });
-  afterEach(() => { global.fetch = originalFetch; });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    vi.stubEnv("IFLOW_OAUTH_CLIENT_SECRET", "test-iflow-client-secret");
+    global.fetch = originalFetch;
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    global.fetch = originalFetch;
+  });
 
   it("iflow: Basic Auth header from clientId:clientSecret, form body keeps client_secret", async () => {
     const fm = mockFetchOnce({ access_token: "if-acc", refresh_token: "if-rot", expires_in: 3600 });
@@ -35,7 +43,7 @@ describe("refreshAccessToken — config-driven profiles", () => {
     expect(init.headers["Authorization"]).toMatch(/^Basic /);
     const body = new URLSearchParams(init.body);
     expect(body.get("client_id")).toBeTruthy();
-    expect(body.get("client_secret")).toBeTruthy();
+    expect(body.get("client_secret")).toBe("test-iflow-client-secret");
   });
 
   it("github: omits client_secret when config has none", async () => {
