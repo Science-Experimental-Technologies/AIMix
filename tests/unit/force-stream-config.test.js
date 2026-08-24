@@ -104,6 +104,12 @@ vi.mock("@/lib/usageDb.js", () => ({
   saveRequestDetail: vi.fn(() => Promise.resolve()),
 }));
 
+// Load the large modules once after Vitest has registered the mocks. Keeping
+// transforms out of individual tests prevents worker contention from consuming
+// the per-test timeout budget during full-suite runs.
+const { PROVIDERS } = await import("../../open-sse/config/providers.js");
+const { handleChatCore } = await import("../../open-sse/handlers/chatCore.js");
+
 const FORCED = ["openai", "codex", "commandcode"];
 
 function makeOptions(bodyStream) {
@@ -134,7 +140,6 @@ describe("forceStream provider config", () => {
   });
 
   it("only openai/codex/commandcode force streaming", async () => {
-    const { PROVIDERS } = await import("../../open-sse/config/providers.js");
     for (const id of FORCED) {
       expect(PROVIDERS[id]?.forceStream, `${id} forced`).toBe(true);
     }
@@ -145,8 +150,6 @@ describe("forceStream provider config", () => {
   });
 
   it.each([undefined, false])( "keeps forced-stream providers streaming for JSON clients when body.stream is %s", async (bodyStream) => {
-    const { handleChatCore } = await import("../../open-sse/handlers/chatCore.js");
-
     await handleChatCore(makeOptions(bodyStream));
 
     expect(executeMock).toHaveBeenCalledTimes(1);
