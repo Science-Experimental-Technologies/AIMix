@@ -35,11 +35,11 @@ describe("detectRequiredCapabilities", () => {
     expect(r.has("vision")).toBe(true);
   });
 
-  it("web_search tool -> search", () => {
+  it("defers web_search capability detection until auto-switch support is wired", () => {
     const r = detectRequiredCapabilities({ messages: [{ role: "user", content: "q" }], tools: [
       { type: "web_search" },
     ] });
-    expect(r.has("search")).toBe(true);
+    expect(r.has("search")).toBe(false);
   });
 
   it("responses input_image -> vision", () => {
@@ -60,6 +60,7 @@ describe("reorderByCapabilities", () => {
     // deepseek-chat = no vision; claude-sonnet = vision
     const models = ["deepseek/deepseek-chat", "anthropic/claude-sonnet-4.6"];
     const out = reorderByCapabilities(models, new Set(["vision"]));
+    expect(out).not.toBe(models);
     expect(out[0]).toBe("anthropic/claude-sonnet-4.6");
     expect(out).toContain("deepseek/deepseek-chat"); // not dropped
     expect(out).toHaveLength(2);
