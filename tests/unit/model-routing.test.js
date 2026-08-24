@@ -12,11 +12,19 @@ async function setupDb() {
 
   const { createProviderNode } = await import("@/models/index.js");
   const { getModelInfo } = await import("@/sse/services/model.js");
+  const { getAdapter } = await import("@/lib/db/driver.js");
+  const adapter = await getAdapter();
 
   return {
     createProviderNode,
     getModelInfo,
     cleanup() {
+      adapter.close();
+      if (global._dbAdapter?.instance === adapter) {
+        global._dbAdapter.instance = null;
+        global._dbAdapter.initPromise = null;
+        global._dbAdapter.logged = false;
+      }
       fs.rmSync(tempDir, { recursive: true, force: true });
     },
   };
