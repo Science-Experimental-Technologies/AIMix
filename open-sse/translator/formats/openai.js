@@ -55,7 +55,11 @@ export function filterToOpenAIFormat(body, opts = {}) {
         filteredContent.push({ type: OPENAI_BLOCK.TEXT, text: "" });
       }
       
-      return { ...msg, content: collapseTextParts(filteredContent) };
+      // Collapsing cached text blocks to a string would discard cache_control.
+      // Keep the block shape only when preservation was requested and metadata
+      // is actually present; ordinary text-only requests still use strings.
+      const hasCacheControl = keepCache && filteredContent.some(block => block.cache_control);
+      return { ...msg, content: hasCacheControl ? filteredContent : collapseTextParts(filteredContent) };
     }
     
     return msg;

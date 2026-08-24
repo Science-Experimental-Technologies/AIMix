@@ -61,6 +61,6 @@ describe("filterToOpenAIFormat cache_control handling (#2069)", () => {
       messages: [{ role: "user", content: [{ type: "text", text: "no cache" }] }],
     };
     filterToOpenAIFormat(body, { preserveCacheControl: true });
-    expect(body.messages[0].content[0].cache_control).toBeUndefined();
+    expect(body.messages[0].content).toBe("no cache");
   });
 });
