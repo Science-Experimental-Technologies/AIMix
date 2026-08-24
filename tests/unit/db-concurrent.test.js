@@ -17,7 +17,9 @@ beforeAll(async () => {
   await db.initDb();
 });
 
-afterAll(() => {
+afterAll(async () => {
+  const { getAdapter } = await import("../../src/lib/db/driver.js");
+  (await getAdapter()).close();
   if (tempDir) fs.rmSync(tempDir, { recursive: true, force: true });
   if (originalDataDir === undefined) delete process.env.DATA_DIR;
   else process.env.DATA_DIR = originalDataDir;
@@ -43,6 +45,23 @@ describe("DB Concurrency — atomic safety", () => {
 
     const hist = await db.getUsageHistory({ provider: "openai" });
     expect(hist.length).toBe(N);
+  });
+
+  it("deduplicates retries that carry the same explicit timestamp", async () => {
+    const entry = {
+      timestamp: "2026-01-15T12:00:00.000Z",
+      provider: "idempotent-provider",
+      model: "stable-model",
+      connectionId: "stable-connection",
+      tokens: { prompt_tokens: 7, completion_tokens: 3 },
+      endpoint: "/v1/chat",
+      status: "ok",
+    };
+
+    await Promise.all([db.saveRequestUsage({ ...entry }), db.saveRequestUsage({ ...entry })]);
+
+    const history = await db.getUsageHistory({ provider: "idempotent-provider" });
+    expect(history).toHaveLength(1);
   });
 
   it("200 parallel saveRequestDetail → all flushed", async () => {
