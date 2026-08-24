@@ -11,7 +11,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 // Mock DNS so the SSRF guard treats example.com as public.
-vi.mock("node:dns/promises", () => ({ lookup: async () => ({ address: "93.184.216.34" }) }));
+const { lookupMock } = vi.hoisted(() => ({
+  lookupMock: vi.fn(async () => [{ address: "93.184.216.34", family: 4 }]),
+}));
+vi.mock("node:dns/promises", () => ({ lookup: lookupMock }));
 
 import { CodexExecutor } from "../../open-sse/executors/codex.js";
 import * as proxyFetchModule from "../../open-sse/utils/proxyFetch.js";
@@ -51,6 +54,7 @@ describe("CodexExecutor image handling", () => {
 
   beforeEach(() => {
     originalFetch = global.fetch;
+    lookupMock.mockClear();
   });
 
   afterEach(() => {
@@ -85,6 +89,7 @@ describe("CodexExecutor image handling", () => {
     const decodedLen = Buffer.from(base64Payload, "base64").length;
     expect(decodedLen).toBe(IMAGE_1MB_BYTES);
     expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(lookupMock).toHaveBeenCalledWith("example.com", { all: true });
   });
 
   it("passes through existing data URIs without calling fetch", async () => {
