@@ -25,14 +25,22 @@ async function setupTestContext(nodeData) {
     createProviderNode,
     getProviderConnections,
   } = await import("@/models/index.js");
+  const { getAdapter } = await import("@/lib/db/driver.js");
 
   const node = await createProviderNode(nodeData);
+  const adapter = await getAdapter();
 
   return {
     node,
     POST,
     getProviderConnections,
     cleanup() {
+      adapter.close();
+      if (global._dbAdapter?.instance === adapter) {
+        global._dbAdapter.instance = null;
+        global._dbAdapter.initPromise = null;
+        global._dbAdapter.logged = false;
+      }
       fs.rmSync(tempDir, { recursive: true, force: true });
     },
   };
