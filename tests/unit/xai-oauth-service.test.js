@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { XaiService, discoverEndpoints, resetXaiDiscoveryCache, validateOAuthEndpoint } from "../../src/lib/oauth/services/xai.js";
+import { exchangeTokens, generateAuthData } from "../../src/lib/oauth/providers.js";
 
 describe("xai/oauth service", () => {
   beforeEach(() => {
-    vi.resetModules();
     vi.restoreAllMocks();
     vi.stubGlobal("fetch", vi.fn());
+    resetXaiDiscoveryCache();
   });
 
-  it("validates discovered endpoints are https x.ai URLs", async () => {
-    const { validateOAuthEndpoint } = await import("../../src/lib/oauth/services/xai.js");
-
+  it("validates discovered endpoints are https x.ai URLs", () => {
     expect(validateOAuthEndpoint("https://auth.x.ai/oauth2/authorize", "authorization_endpoint")).toBe(
       "https://auth.x.ai/oauth2/authorize"
     );
@@ -30,7 +30,6 @@ describe("xai/oauth service", () => {
       }),
     });
 
-    const { discoverEndpoints } = await import("../../src/lib/oauth/services/xai.js");
     await expect(discoverEndpoints()).resolves.toEqual({
       authorizeUrl: "https://auth.x.ai/oauth2/authorize",
       tokenUrl: "https://auth.x.ai/oauth2/token",
@@ -42,7 +41,6 @@ describe("xai/oauth service", () => {
   });
 
   it("builds authorize URLs with CLIProxyAPI query extras", async () => {
-    const { XaiService } = await import("../../src/lib/oauth/services/xai.js");
     const authUrl = new XaiService().buildXaiAuthUrl(
       "http://127.0.0.1:56121/callback",
       "state-1",
@@ -72,7 +70,6 @@ describe("xai/oauth service", () => {
       }),
     });
 
-    const { generateAuthData } = await import("../../src/lib/oauth/providers.js");
     const data = await generateAuthData("xai", "http://127.0.0.1:56121/callback");
     const parsed = new URL(data.authUrl);
 
@@ -86,24 +83,26 @@ describe("xai/oauth service", () => {
 
   it("exchanges dashboard codes against the discovered xAI token endpoint", async () => {
     const fetchMock = fetch;
-    fetchMock
-      .mockResolvedValueOnce({
+    fetchMock.mockImplementation(async (url) => {
+      if (url === "https://auth.x.ai/.well-known/openid-configuration") {
+        return {
         ok: true,
         json: async () => ({
           authorization_endpoint: "https://auth.x.ai/oauth2/authorize",
           token_endpoint: "https://auth.x.ai/oauth2/token-from-discovery",
         }),
-      })
-      .mockResolvedValueOnce({
+        };
+      }
+      return {
         ok: true,
         json: async () => ({
           access_token: "access-token",
           refresh_token: "refresh-token",
           expires_in: 3600,
         }),
-      });
+      };
+    });
 
-    const { exchangeTokens } = await import("../../src/lib/oauth/providers.js");
     const tokens = await exchangeTokens(
       "xai",
       "auth-code",
@@ -112,10 +111,11 @@ describe("xai/oauth service", () => {
       "state-1"
     );
 
-    expect(fetchMock.mock.calls[1][0]).toBe("https://auth.x.ai/oauth2/token-from-discovery");
-    expect(fetchMock.mock.calls[1][1].body.get("grant_type")).toBe("authorization_code");
-    expect(fetchMock.mock.calls[1][1].body.get("code")).toBe("auth-code");
-    expect(fetchMock.mock.calls[1][1].body.get("code_verifier")).toBe("verifier-1");
+    const tokenCall = fetchMock.mock.calls.find(([url]) => url === "https://auth.x.ai/oauth2/token-from-discovery");
+    expect(tokenCall).toBeDefined();
+    expect(tokenCall[1].body.get("grant_type")).toBe("authorization_code");
+    expect(tokenCall[1].body.get("code")).toBe("auth-code");
+    expect(tokenCall[1].body.get("code_verifier")).toBe("verifier-1");
     expect(tokens).toMatchObject({
       accessToken: "access-token",
       refreshToken: "refresh-token",
